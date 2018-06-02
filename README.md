@@ -6,6 +6,8 @@ Media Queue is a simple application to track books to
 be read and TV shows to be watched. It has a "TODO" list style interface with multiple tabs (one for books and one for shows).
 Items within the list can be reordered, deleted (with a long press), or completed. 
 
+![image](/MediaQueue.png)
+
 ### Technical Features
 * sqlite backed storage of media items
 * tabbed interface
