@@ -78,10 +78,10 @@ class DatabaseClient{
     final result = <Media>[];
     var dbClient = await db;
     List<Map> resultList = await dbClient.query(mediaTable,
-      columns: [columnId, columnTitle, columnComplete, columnNotes, columnOrder],
+      columns: [columnId, columnTitle, columnComplete, columnNotes, columnOrder, columnType],
       where: "$columnType = ? ",
       whereArgs: [type],
-      orderBy: "$columnOrder asc");
+      orderBy: "$columnComplete, $columnOrder asc");
 
     for(var mapEntry in resultList){
       result.add(Media.fromMap(mapEntry));

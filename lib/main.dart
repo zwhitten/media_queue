@@ -63,31 +63,10 @@ class AppPageState extends State<AppPage>
             new MediaPage(type: 'book'),
             new MediaPage(type: 'show')
           ]),
-          floatingActionButton: new FloatingActionButton(
-              onPressed: _newItem, child: new Icon(Icons.add)),
         );
   }
 
-  void _newItem() {
-    String type = _tabController.index==0? 'book':'show';
-    Navigator
-        .of(context)
-        .push(new MaterialPageRoute(builder: (BuildContext context) {
-      return new Scaffold(
-        appBar: new AppBar(
-          title:  Text("Add new $type to queue"),
-        ),
-        body: new MyForm(type: type)
-      );
-    })).then((val)=> setState((){
-      debugPrint("Set state called...");
-    }));
-  }
 
-  void resetState() {
-    debugPrint("Reset called");
-    setState(() {});
-  }
 }
 
 class MyForm extends StatefulWidget {
@@ -104,60 +83,71 @@ class MyFormState extends State<MyForm> {
 
   Media _mediaInfo = new Media();
   DatabaseClient client = new DatabaseClient();
+
   void addMedia() {
-//    setState(() {
     _mediaInfo.type = this.type;
     _mediaInfo.order = 100;
     client.insert(_mediaInfo);
-//    parentReset();
-//    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return new Form(
+    final String titleLabel = type == 'book' ? 'Book Title' : 'Show Title';
+    final String placeholder = type == 'book' ? 'Moby Dick' : 'Breaking Bad';
+    return Form(
         key: _formKey,
-        child: new Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            new TextFormField(
-              decoration: new InputDecoration(
-                  hintText: 'Moby Dick', labelText: 'Book Title'),
-              validator: (value) {
-                if (value.isEmpty) {
-                  return 'Please Enter a Title';
-                }
-              },
-              onSaved: (String value) {
-                this._mediaInfo.title = value;
-              },
-            ),
-            new Text('Notes'),
-            new TextFormField(
-              onSaved: (String value) {
-                this._mediaInfo.notes = value;
-              },
-            ),
-            new Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: new RaisedButton(
-                  onPressed: () {
-                    if (_formKey.currentState.validate()) {
-                      Scaffold.of(context).showSnackBar(
-                          new SnackBar(content: new Text("ProcessingData")));
-                      _formKey.currentState.save();
-                      addMedia();
-                      Navigator.pop(context, true);
+        child: Padding(
+            padding: const EdgeInsets.all(30.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                SizedBox(height: 20.0,),
+                TextFormField(
+                  decoration: InputDecoration(
+                    border: new OutlineInputBorder(),
+                      hintText: placeholder,
+                      labelText: titleLabel),
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'Please Enter a Title';
                     }
                   },
-                  child: new Text(
-                    'Submit',
-                    style: new TextStyle(color: Colors.white),
-                  ),
-                  color: Colors.blue,
-                ))
-          ],
-        ));
+                  onSaved: (String value) {
+                    this._mediaInfo.title = value;
+                  },
+                ),
+                SizedBox(height: 20.0,),
+                TextFormField(
+                  decoration: InputDecoration(
+                      border: new OutlineInputBorder(),
+                      labelText: "Notes"),
+                  onSaved: (String value) {
+                    this._mediaInfo.notes = value;
+                  },
+                ),
+                new Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: new RaisedButton(
+                      onPressed: () {
+                        if (_formKey.currentState.validate()) {
+                          Scaffold.of(context).showSnackBar(
+                              new SnackBar(
+                                  content: new Text("ProcessingData")));
+                          _formKey.currentState.save();
+                          addMedia();
+                          Navigator.pop(context, true);
+                        }
+                      },
+                      child: new Text(
+                        'Submit',
+                        style: new TextStyle(color: Colors.white),
+                      ),
+                      color: Colors.blue,
+                    ))
+              ],
+            )
+        )
+    );
   }
 }
 
@@ -222,25 +212,60 @@ class MediaPageState extends State<MediaPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        Expanded(
-            child: ReorderableList(
-                onReorder: this._reorderCallBack,
-                child: ListView.builder(
-                  itemCount: this.mediaList.length,
-                  itemBuilder: (BuildContext c, index) => new Item(
-                      media: mediaList[index],
-                      first: index == 0,
-                      last: index == mediaList.length - 1,
-                      deleteAction: () => this.deleteItem(mediaList[index].id))
-                )
-      )
-      )
+    return Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          Column(
+            children: <Widget>[
+              Expanded(
+                  child: ReorderableList(
+                      onReorder: this._reorderCallBack,
+                      child: ListView.builder(
+                          itemCount: this.mediaList.length,
+                          itemBuilder: (BuildContext c, index) =>
+                          Item(
+                              media: mediaList[index],
+                              first: index == 0,
+                              last: index == mediaList.length - 1,
+                              deleteAction: () =>
+                                  this.deleteItem(mediaList[index].id),
+                              completeAction: (val) =>
+                                  this.toggleComplete(val, mediaList[index]),
+                          ),
+                      )
+                  )
+              )
+            ],
+          ),
+          Positioned(
+            right: 20.0,
+            bottom: 20.0,
+            child: FloatingActionButton(
+              child: Icon(Icons.add),
+              onPressed: _newItem,
+              backgroundColor: Colors.teal,
 
-      ],
-    );
+            )
+          )
+        ]);
   }
+
+  void _newItem() {
+
+    Navigator
+        .of(context)
+        .push(MaterialPageRoute(builder: (BuildContext context) {
+      return Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.green,
+            title: Text("New $mediaType"),
+          ),
+          body: MyForm(type: mediaType)
+      );
+    }))
+        .then((val) =>
+        client.getMediaByType(this.mediaType).then(this.setMedia));
+    }
 
   void deleteItem(int id) {
     setState(() {
@@ -248,16 +273,23 @@ class MediaPageState extends State<MediaPage> {
       client.getMediaByType(this.mediaType).then(this.setMedia );
     });
   }
+
+  void toggleComplete(bool newVal, Media mediaItem) {
+    mediaItem.complete = newVal;
+    client.update(mediaItem);
+    client.getMediaByType(this.mediaType).then(this.setMedia);
+  }
 }
 
 class Item extends StatelessWidget {
-  Item({this.media, this.first, this.last, this.deleteAction});
+  Item({this.media, this.first, this.last, this.deleteAction, this.completeAction});
 
   final Media media;
   final bool first;
   final bool last;
 
   var deleteAction;
+  var completeAction;
 
   BoxDecoration _buildDecoration(BuildContext context, bool dragging) {
     return BoxDecoration(
@@ -271,13 +303,15 @@ class Item extends StatelessWidget {
   }
 
   Widget _buildChild(BuildContext context, bool dragging) {
+    final Color backGroundColor = dragging ? Colors.lightGreen :
+    (media.complete ? Colors.grey : Colors.white);
     return GestureDetector(
-        onLongPress: () => deleteAction(),
+        onLongPress: deleteAction,
         child: Container(
           height: 50.0,
       decoration:
           BoxDecoration(
-              color: dragging ? Colors.lightGreen : Colors.white70,
+              color: backGroundColor,
               border: Border.all(
               color: Colors.lightBlueAccent,
             width: 1.0
@@ -287,7 +321,9 @@ class Item extends StatelessWidget {
           bottom: false,
           child: Row(
             children: <Widget>[
-              Checkbox(value: false),
+              Checkbox(
+                onChanged: completeAction,
+                value: media.complete),
               Expanded(child: Text(media.title)),
               Icon(Icons.reorder, color: dragging ? Colors.blue : Colors.grey)
             ],
