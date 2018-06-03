@@ -218,7 +218,7 @@ class MediaPageState extends State<MediaPage> {
           Column(
             children: <Widget>[
               Expanded(
-                  child: ReorderableList(
+                  child: mediaList.length > 0 ?  (ReorderableList(
                       onReorder: this._reorderCallBack,
                       child: ListView.builder(
                           itemCount: this.mediaList.length,
@@ -233,7 +233,12 @@ class MediaPageState extends State<MediaPage> {
                                   this.toggleComplete(val, mediaList[index]),
                           ),
                       )
-                  )
+                  )) :
+                  new Center(child: 
+                    new Text("No ${mediaType}s", 
+                      style: TextStyle(
+                        color: Colors.grey, 
+                        fontSize: 24.0),),)
               )
             ],
           ),
