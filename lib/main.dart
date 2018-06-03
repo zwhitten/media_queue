@@ -376,6 +376,9 @@ class ItemState extends State<Item> {
       );
     }
     );
+    if(val){
+      deleteAction();
+    }
 
   }
 
