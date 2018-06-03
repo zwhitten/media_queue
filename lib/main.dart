@@ -287,7 +287,7 @@ class MediaPageState extends State<MediaPage> {
   }
 }
 
-class Item extends StatefulWidget {
+class Item extends StatelessWidget {
   Item({this.media, this.first, this.last, this.deleteAction, this.completeAction});
   final Media media;
   final bool first;
@@ -296,20 +296,7 @@ class Item extends StatefulWidget {
   var deleteAction;
   var completeAction;
 
-  @override
-  ItemState createState() => new ItemState(media: this.media, completeAction: this.completeAction, deleteAction: this.deleteAction, first: this.first, last: this.last);
-}
-
-class ItemState extends State<Item> {
-
-  ItemState({this.media, this.first, this.last, this.deleteAction, this.completeAction});
-  
-  final Media media;
-  final bool first;
-  final bool last;
-
-  var deleteAction;
-  var completeAction;
+  BuildContext _context;
 
   BoxDecoration _buildDecoration(BuildContext context, bool dragging) {
     return BoxDecoration(
@@ -323,6 +310,8 @@ class ItemState extends State<Item> {
   }
 
   Widget _buildChild(BuildContext context, bool dragging) {
+
+    this._context = context;
     final Color backGroundColor = dragging ? Colors.lightGreen :
     (media.complete ? Colors.grey : Colors.white);
     return GestureDetector(
@@ -354,7 +343,7 @@ class ItemState extends State<Item> {
 
   Future<Null> _confirmDelete() async {
     bool val =  await showDialog<bool>(
-      context: this.context, 
+      context: this._context, 
       builder: (BuildContext context){
         return new SimpleDialog(
           title: Text("Delete ${this.media.title}?"),
@@ -380,6 +369,9 @@ class ItemState extends State<Item> {
       deleteAction();
     }
 
+    if(val){
+      deleteAction();
+    }
   }
 
   @override
