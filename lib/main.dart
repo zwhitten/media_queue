@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'db.dart';
 import 'reorderable_list.dart';
@@ -198,7 +200,6 @@ class MediaPageState extends State<MediaPage> {
       }
       debugPrint(
           "Reordering " + item.toString() + " -> " + newPosition.toString());
-//      client.getMediaByType("book").then(this.displayBooks);
     });
     return true;
   }
@@ -286,9 +287,23 @@ class MediaPageState extends State<MediaPage> {
   }
 }
 
-class Item extends StatelessWidget {
+class Item extends StatefulWidget {
   Item({this.media, this.first, this.last, this.deleteAction, this.completeAction});
+  final Media media;
+  final bool first;
+  final bool last;
 
+  var deleteAction;
+  var completeAction;
+
+  @override
+  ItemState createState() => new ItemState(media: this.media, completeAction: this.completeAction, deleteAction: this.deleteAction, first: this.first, last: this.last);
+}
+
+class ItemState extends State<Item> {
+
+  ItemState({this.media, this.first, this.last, this.deleteAction, this.completeAction});
+  
   final Media media;
   final bool first;
   final bool last;
@@ -311,7 +326,7 @@ class Item extends StatelessWidget {
     final Color backGroundColor = dragging ? Colors.lightGreen :
     (media.complete ? Colors.grey : Colors.white);
     return GestureDetector(
-        onLongPress: deleteAction,
+        onLongPress: _confirmDelete,
         child: Container(
           height: 50.0,
       decoration:
@@ -337,6 +352,33 @@ class Item extends StatelessWidget {
     ));
   }
 
+  Future<Null> _confirmDelete() async {
+    bool val =  await showDialog<bool>(
+      context: this.context, 
+      builder: (BuildContext context){
+        return new SimpleDialog(
+          title: Text("Delete ${this.media.title}?"),
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                SimpleDialogOption(
+                  child: RaisedButton(
+                    child: const Text("Yes!"),
+                    color: Colors.blue, 
+                    onPressed: (){Navigator.pop(context, true); })),
+                SimpleDialogOption(
+                  child: FlatButton(
+                    child: const Text("No"),
+                   onPressed: (){Navigator.pop(context, false); }),
+          )],
+        )]
+      
+      );
+    }
+    );
+
+  }
+
   @override
   Widget build(BuildContext context) {
     return ReorderableItem(
@@ -344,4 +386,6 @@ class Item extends StatelessWidget {
         childBuilder: _buildChild,
         decorationBuilder: _buildDecoration);
   }
+
+
 }
